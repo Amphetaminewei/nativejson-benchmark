@@ -1,4 +1,4 @@
-#if defined(__clang__) || defined(__GNUC__)
+//#if defined(__clang__) || defined(__GNUC__)
 
 #include "../test.h"
 #include "nlohmann/src/json.hpp"
@@ -135,4 +135,4 @@ public:
 
 REGISTER_TEST(NlohmannTest);
 
-#endif
+//#endif
