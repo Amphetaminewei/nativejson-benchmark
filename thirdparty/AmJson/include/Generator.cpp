@@ -3,6 +3,7 @@
 
 namespace Json {
 	Generator::Generator(const Value& val, std::string& result) : res(result){
+		//注意这里传入的是引用，给res初始化用的也是引用，意味着res的改变也会随之更改result
 		res.clear();
 		stringifyValue(val);
 	}

@@ -804,7 +804,6 @@ static void BenchAllPerformance(const TestJsonList& testJsons) {
 
 static void BenchConformance(const TestBase& test, FILE* fp) {
     printf("Benchmarking Conformance of %s\n", test.GetName());
-    
     // Output markdown
     FILE* md;
     char testname[FILENAME_MAX];

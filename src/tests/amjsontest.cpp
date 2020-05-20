@@ -106,17 +106,6 @@ public:
 	}
 #endif // TEST_STRINGIFY
 
-#if TEST_PRETTIFY
-	//尚未支持格式化功能
-	virtual StringResultBase* Prettify(const ParseResultBase* parseResult)const {
-		const AmJsonParseResult* pr = static_cast<const AmJsonParseResult*>(parseResult);
-		AmJsonStringResult* sr = new AmJsonStringResult;
-		std::string result;
-		pr->root.stringify(result);
-		sr->s = result;
-		return sr;
-	}
-#endif // TEST_PRETTIFY
 
 #if TEST_STATISTICS
 	virtual bool Statistics(const ParseResultBase* parseResult, Stat* stat) const {
@@ -129,13 +118,18 @@ public:
 
 #if TEST_CONFORMANCE
 	virtual bool ParseDouble(const char* j, double* d)const {
+		AmJson root;
+		root.parse(j);
+		*d = root.getArrayElement(0).getNumber();
+		return true;
+	}
+	virtual bool ParseString(const char* j, std::string& s) const {
 		try {
 			AmJson root;
 			root.parse(j);
-			*d = root.getNumber();
+			s = root.getArrayElement(0).getString();
 			return true;
-		}
-		catch(...){}
+		}catch(...){}
 		return false;
 	}
 #endif // TEST_CONFORMANCE

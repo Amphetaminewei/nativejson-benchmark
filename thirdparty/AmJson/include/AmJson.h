@@ -4,7 +4,7 @@
 
 
 namespace Json {
-	enum type : int {
+	enum Type : int {
 		Null,
 		True,
 		False,
@@ -39,8 +39,8 @@ namespace Json {
 		AmJson& operator=(AmJson&& rhs)noexcept;
 
 		//解析函数
-		void parse(const std::string& content, std::string& status) noexcept;
-		void parse(const std::string& content);
+		void parse(std::string content, std::string& status) noexcept;
+		void parse(std::string content);
 		//生成
 		void stringify(std::string& content) const noexcept;
 
@@ -57,23 +57,23 @@ namespace Json {
 		const std::string getString()const noexcept;
 		void setString(const std::string&)noexcept;
 
-		AmJson getArrayElement(size_t index)const noexcept;
+		AmJson getArrayElement(const size_t& index)const noexcept;
 		size_t getArraySize()const noexcept;
 		void setArray()noexcept;
 		void pushbackArrayElement(const AmJson&)noexcept;
 		void popbackArrayElement()noexcept;
-		void insertArrayElement(const AmJson&, size_t)noexcept;
-		void eraseArrayElement(size_t index, size_t count)noexcept;
+		void insertArrayElement(const AmJson&, const size_t&)noexcept;
+		void eraseArrayElement(const size_t& index, const size_t& count)noexcept;
 		void clearArray()noexcept;
 
 		void setObject()noexcept;
 		size_t getObjectSize()const noexcept;
-		const std::string getObjectKey(size_t index)const noexcept;
-		size_t getObjectKeyLength(size_t index)const noexcept;
-		AmJson getObjectValue(size_t index)const noexcept;
+		const std::string getObjectKey(const size_t& index)const noexcept;
+		size_t getObjectKeyLength(const size_t& index)const noexcept;
+		AmJson getObjectValue(const size_t& index)const noexcept;
 		void setObjectValue(const std::string& key, const AmJson& value)noexcept;
 		long long findObjectIndex(const std::string& key)const noexcept;
-		void removeObjectValue(size_t index)noexcept;
+		void removeObjectValue(const size_t& index)noexcept;
 		void clearObject()noexcept;
 	};
 	//提供非成员函数版本的== != 和交换

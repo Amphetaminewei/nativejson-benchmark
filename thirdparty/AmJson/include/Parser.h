@@ -15,7 +15,8 @@ namespace Json {
 		void parseValue();
 
 		//处理bool和null
-		void parseLiteral(const char* literal, Json::type typ);
+		void parseNull(const char* literal);
+		void parseBool(const char* literal, bool&&);
 
 		void parseNumber();
 		void parseString();
@@ -27,7 +28,8 @@ namespace Json {
 		void parseEncodeUtf8(std::string& s, unsigned u) const noexcept;
 	public:
 		//通过构造函数进行实际的解析操作，val用来缓存解析后的JSON对象
-		Parser(Value&, const std::string&);
+
+		Parser(Value&, std::string&&);
 	};
 }
 

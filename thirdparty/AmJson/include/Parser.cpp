@@ -6,7 +6,6 @@
 #include<math.h>
 #include<stdlib.h>
 
-//定位错误
 #include<iostream>
 
 namespace Json {
@@ -18,9 +17,7 @@ namespace Json {
 	}
 
 	//对成员初始化，并调用解析和函数，真正的解析处理在parseValue
-	Parser::Parser(Value& value, const std::string& content):val(value),cur(content.c_str()) {
-		//默认为空
-		val.setType(Json::Null);
+	Parser::Parser(Value& value, std::string&& content):val(value),cur(std::move(content.c_str())) {
 		//跳过前空格
 		parseWhitespace();
 		//处理json值
@@ -30,7 +27,7 @@ namespace Json {
 
 		//如果处理完之后最后不是终结符则抛出异常
 		if (*cur != '\0') {
-			val.setType(Json::Null);
+			val.setValue(1);
 			throw(Json::Exception("parse root not singular"));
 		}
 	}
@@ -45,11 +42,10 @@ namespace Json {
 	void Parser::parseValue() {
 		//由于JSON类型判断较为简单，只需判断首个字符即可确定类型，所以这里直接判断类型并进行分发
 		//分发后的函数使用断言进行再次校验
-		//由于null true和false的处理比较简单，只需要设定value的类型即可，所以这里用同一个函数来处理
 		switch (*cur) {
-		case 'n': parseLiteral("null", Json::Null);  return;
-		case 't': parseLiteral("true", Json::True);  return;
-		case 'f': parseLiteral("false", Json::False); return;
+		case 'n': parseNull("null");  return;
+		case 't': parseBool("true", true);  return;
+		case 'f': parseBool("false", false); return;
 		case '\"': parseString(); return;
 		case '[': parseArray();  return;
 		case '{': parseObject(); return;
@@ -59,21 +55,30 @@ namespace Json {
 	}
 
 
-	//用来处理null、true和false，literal和tpye是字符串与起对应的类型，literal为null则类型为Json::Null
-	void Parser::parseLiteral(const char* literal, Json::type type) {
-		//cur是要解析的文本，如果这个文本和传入的字符不相等则抛出异常并终止程序，用来检查参数的合法性
+	void Parser::parseNull(const char* literal) {
 		expect(cur, literal[0]);
-
-		//后面还需要用到i
 		size_t i;
 		for (i = 0; literal[i + 1]; ++i) {
 			if (cur[i] != literal[i + 1]) {
-				val.setType(Json::Null);
+				val.setValue(1);
 				throw (Exception("parse invalid value"));
 			}
 		}
 		cur += i;
-		val.setType(type);
+		val.setValue(1);
+	}
+
+	void Parser::parseBool(const char* literal, bool&& bol) {
+		expect(cur, literal[0]);
+		size_t i;
+		for (i = 0; literal[i + 1]; ++i) {
+			if (cur[i] != literal[i + 1]) {
+				val.setValue(1);
+				throw (Exception("parse invalid value"));
+			}
+		}
+		cur += i;
+		val.setValue(std::move(bol));
 	}
 
 	//解析数字
@@ -92,7 +97,7 @@ namespace Json {
 		else {
 			//isdigit来判断是否为0-9之间的数字
 			if (!isdigit(*p)) {
-				val.setType(Json::Null);
+				val.setValue(1);
 				throw(Exception("parse invalid value"));
 			}
 			//如果不是0开头就直接往后走，直到小数点或者整数结束
@@ -112,6 +117,7 @@ namespace Json {
 				++p; 
 			}
 			if (!isdigit(*p)) { 
+				val.setValue(1);
 				throw (Exception("parse invalid value")); 
 			}
 			while (isdigit(*++p));
@@ -121,9 +127,10 @@ namespace Json {
 		double v = strtod(cur, NULL);
 		//因为JSON中没有限制数字大小，这里需要检查是否在double可容纳的范围内
 		if (errno == ERANGE && (v == HUGE_VAL || v == -HUGE_VAL)) {
+			val.setValue(1);
 			throw (Exception("parse number too big"));
 		}
-		val.setNumber(v);
+		val.setValue(std::move(v));
 		//上面都解析完了，所以将cur定位到p的位置，不让cur直接跟着p走是因为上面的strtod需要
 		cur = p;
 	}
@@ -134,7 +141,7 @@ namespace Json {
 		//因为在处理对象类型的时候还会用到这部分功能，为了代码复用单独设计一个函数对s进行处理并校验
 		//有些设计是用其他定制容器做缓冲区的，性能会更好
 		parseStringRaw(s);
-		val.setString(s);
+		val.setValue(std::move(s));
 	}
 
 	void Parser::parseStringRaw(std::string& tmp) {
@@ -149,6 +156,7 @@ namespace Json {
 		//之前在断言的地方就已经跳过了前引号了，所以这里检查的是后引号，直到后引号的位置停下
 		while (*p != '\"') {
 			if (*p == '\0') {
+				val.setValue(1);
 				throw(Exception("parse miss quotation mark"));
 			}
 			if (*p == '\\' && ++p) {
@@ -167,13 +175,16 @@ namespace Json {
 					if (u >= 0xD800 && u <= 0xDBFF) {
 						//遇到高代理项需要把低代理项也解析进来，然后计算码点
 						if (*p++ != '\\') {
+							val.setValue(1);
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						if (*p++ != 'u') {
+							val.setValue(1);
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						parseHex4(p, u2);
 						if (u2 < 0xDC00 || u2>0xDFFF) {
+							val.setValue(1);
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
@@ -185,6 +196,7 @@ namespace Json {
 			}
 			//%x00 至 %x1F是JSON规定的不合法字符范围
 			else if ((unsigned char)*p < 0x20) {
+				val.setValue(1);
 				throw (Exception("parse invalid string char"));
 			}
 			//如果没有转义字符也没有后引号就一直往后走，注意哦这里一直在给tmp中加内容
@@ -254,12 +266,13 @@ namespace Json {
 		if (*cur == ']') {
 			//如果数组为空
 			++cur;
-			val.setArray(tmp);
+			val.setValue(std::move(tmp));
 			return;
 		}
 		for (;;) {
+
+			//数组中存的内容交给parseValue来处理,因为数组中肯定存了很多内容所以直接进行无线循环，直到解析到]为止
 			try {
-				//数组中存的内容交给parseValue来处理,因为数组中肯定存了很多内容所以直接进行无线循环，直到解析到]为止
 				//由于JSON的数组是可以嵌套数组的，因此这里在解析数组中的数组时会有递归
 				parseValue();
 			}
@@ -267,7 +280,7 @@ namespace Json {
 				//在对其他类型解析过程中，错误都经过处理了
 				throw;
 			}
-			tmp.push_back(val);
+			tmp.push_back(std::move(val));
 			parseWhitespace();
 			if (*cur == ',') {
 				++cur;
@@ -275,11 +288,11 @@ namespace Json {
 			}
 			else if (*cur == ']') {
 				++cur;
-				val.setArray(tmp);
+				val.setValue(std::move(tmp));
 				return;
 			}
 			else {
-				val.setType(Json::Null);
+				val.setValue(1);
 				throw(Exception("parse miss comma or square bracket"));
 			}
 		}
@@ -295,22 +308,25 @@ namespace Json {
 		std::string key;
 		if (*cur == '}') {
 			++cur;
-			val.setObject(tmp);
+			val.setValue(std::move(tmp));
 			return;
 		}
 		for (;;) {
 			if (*cur != '\"') {
+				val.setValue(1);
 				throw(Exception("parse miss key"));
 			}
 			try {
 				parseStringRaw(key);
 			}
 			catch (Exception) {
+				val.setValue(1);
 				throw(Exception("parse miss key"));
 			}
 
 			parseWhitespace();
 			if (*cur++ != ':') {
+				val.setValue(1);
 				throw(Exception("parse miss colon"));
 			}
 			parseWhitespace();
@@ -320,13 +336,11 @@ namespace Json {
 				parseValue();
 			}
 			catch (Exception) {
-				val.setType(Json::Null);
 				throw;
 			}
 
-			//在添入vector后清空等待下次使用，我感觉用移动或者换成置入会快一点，但是用移动需要每次循环都重建一次这两个临时变量
-			tmp.push_back(make_pair(key, val));
-			val.setType(Json::Null);
+			//在这里make_pair构造的就是右值
+			tmp.push_back(std::move(make_pair(key, val)));
 			key.clear();
 
 			parseWhitespace();
@@ -336,14 +350,13 @@ namespace Json {
 			}
 			else if (*cur == '}') {
 				++cur;
-				val.setObject(tmp);
+				val.setValue(std::move(tmp));
 				return;
 			}
 			else {
-				val.setType(Json::Null);
+				val.setValue(1);
 				throw(Exception("parse miss comma or curly bracket"));
 			}
 		}
 	}
-
 }
