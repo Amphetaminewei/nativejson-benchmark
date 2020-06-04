@@ -57,6 +57,8 @@ namespace Json {
 		void removeObjectValue(const size_t& index)noexcept;
 		void clearObject()noexcept;
 
+		void setNull()noexcept;
+
 		Value()noexcept;
 		Value(const Value&)noexcept;
 		Value& operator=(const Value& rhs)noexcept;

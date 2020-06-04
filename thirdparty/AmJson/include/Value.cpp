@@ -11,6 +11,10 @@ namespace Json {
 	}
 	Value::~Value()noexcept {}
 
+	void Value::setNull()noexcept {
+		value = 1;
+	}
+
 	//ÀàÐÍµÄget¡¢set
 	int Value::getType()const noexcept {
 		switch (value.index()) {
@@ -27,8 +31,6 @@ namespace Json {
 		case 3: return Json::String;
 		case 4: return Json::Array;
 		case 5: return Json::Object;
-		default:
-			break;
 		}
 	}
 

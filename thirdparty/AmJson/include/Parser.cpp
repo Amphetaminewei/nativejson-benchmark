@@ -27,7 +27,7 @@ namespace Json {
 
 		//如果处理完之后最后不是终结符则抛出异常
 		if (*cur != '\0') {
-			val.setValue(1);
+			val.setNull();
 			throw(Json::Exception("parse root not singular"));
 		}
 	}
@@ -60,12 +60,12 @@ namespace Json {
 		size_t i;
 		for (i = 0; literal[i + 1]; ++i) {
 			if (cur[i] != literal[i + 1]) {
-				val.setValue(1);
+				val.setNull();
 				throw (Exception("parse invalid value"));
 			}
 		}
 		cur += i;
-		val.setValue(1);
+		val.setNull();
 	}
 
 	void Parser::parseBool(const char* literal, bool&& bol) {
@@ -73,7 +73,7 @@ namespace Json {
 		size_t i;
 		for (i = 0; literal[i + 1]; ++i) {
 			if (cur[i] != literal[i + 1]) {
-				val.setValue(1);
+				val.setNull();
 				throw (Exception("parse invalid value"));
 			}
 		}
@@ -97,7 +97,7 @@ namespace Json {
 		else {
 			//isdigit来判断是否为0-9之间的数字
 			if (!isdigit(*p)) {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse invalid value"));
 			}
 			//如果不是0开头就直接往后走，直到小数点或者整数结束
@@ -117,7 +117,7 @@ namespace Json {
 				++p; 
 			}
 			if (!isdigit(*p)) { 
-				val.setValue(1);
+				val.setNull();
 				throw (Exception("parse invalid value")); 
 			}
 			while (isdigit(*++p));
@@ -127,7 +127,7 @@ namespace Json {
 		double v = strtod(cur, NULL);
 		//因为JSON中没有限制数字大小，这里需要检查是否在double可容纳的范围内
 		if (errno == ERANGE && (v == HUGE_VAL || v == -HUGE_VAL)) {
-			val.setValue(1);
+			val.setNull();
 			throw (Exception("parse number too big"));
 		}
 		val.setValue(std::move(v));
@@ -146,7 +146,6 @@ namespace Json {
 
 	void Parser::parseStringRaw(std::string& tmp) {
 		//这里是为了在解析对象的时候可以单独关键字解析出来，存在单独的位置，而不是保存为value类型
-		//因为这样会浪费value的type成员，而且会更加复杂
 
 		//校验并跳过引号
 		expect(cur, '\"');
@@ -156,7 +155,7 @@ namespace Json {
 		//之前在断言的地方就已经跳过了前引号了，所以这里检查的是后引号，直到后引号的位置停下
 		while (*p != '\"') {
 			if (*p == '\0') {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss quotation mark"));
 			}
 			if (*p == '\\' && ++p) {
@@ -175,16 +174,16 @@ namespace Json {
 					if (u >= 0xD800 && u <= 0xDBFF) {
 						//遇到高代理项需要把低代理项也解析进来，然后计算码点
 						if (*p++ != '\\') {
-							val.setValue(1);
+							val.setNull();
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						if (*p++ != 'u') {
-							val.setValue(1);
+							val.setNull();
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						parseHex4(p, u2);
 						if (u2 < 0xDC00 || u2>0xDFFF) {
-							val.setValue(1);
+							val.setNull();
 							throw(Exception("parse invalid unicode surrogate"));
 						}
 						u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
@@ -196,7 +195,7 @@ namespace Json {
 			}
 			//%x00 至 %x1F是JSON规定的不合法字符范围
 			else if ((unsigned char)*p < 0x20) {
-				val.setValue(1);
+				val.setNull();
 				throw (Exception("parse invalid string char"));
 			}
 			//如果没有转义字符也没有后引号就一直往后走，注意哦这里一直在给tmp中加内容
@@ -292,7 +291,7 @@ namespace Json {
 				return;
 			}
 			else {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss comma or square bracket"));
 			}
 		}
@@ -313,20 +312,20 @@ namespace Json {
 		}
 		for (;;) {
 			if (*cur != '\"') {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss key"));
 			}
 			try {
 				parseStringRaw(key);
 			}
 			catch (Exception) {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss key"));
 			}
 
 			parseWhitespace();
 			if (*cur++ != ':') {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss colon"));
 			}
 			parseWhitespace();
@@ -354,7 +353,7 @@ namespace Json {
 				return;
 			}
 			else {
-				val.setValue(1);
+				val.setNull();
 				throw(Exception("parse miss comma or curly bracket"));
 			}
 		}

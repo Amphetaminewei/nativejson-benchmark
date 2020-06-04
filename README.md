@@ -4,6 +4,11 @@ Copyright(c) 2014-2016 Milo Yip (miloyip@gmail.com)
 
 [![Build Status](https://travis-ci.org/miloyip/nativejson-benchmark.svg?branch=master)](https://travis-ci.org/miloyip/nativejson-benchmark)
 
+## Ps
+
+此版本为根据原作者仓库下的Issue<a herf="https://github.com/miloyip/nativejson-benchmark/issues/126">#126</a>构建的可以在VS2019下运行的版本，此版本中加入了库AmJson参与测试。同时删除了无法在VS下运行的JSON库，只保留了Jansson, nlohmann和RapidJSON以及新加入的AmJson。
+
+
 ## Introduction
 
 This benchmark evaluates the conformance and performance of 41 open-source C/C++ libraries with JSON parsing/generation capabilities. Performance means speed, memory, and code size.
