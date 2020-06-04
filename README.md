@@ -6,7 +6,7 @@ Copyright(c) 2014-2016 Milo Yip (miloyip@gmail.com)
 
 ## Ps
 
-此版本为根据原作者仓库下的Issue[#126]("https://github.com/miloyip/nativejson-benchmark/issues/126")构建的可以在VS2019下运行的版本，此版本中加入了库AmJson参与测试。同时删除了无法在VS下运行的JSON库，只保留了Jansson, nlohmann和RapidJSON以及新加入的AmJson。
+此版本为根据原作者仓库下的Issue [#126](https://github.com/miloyip/nativejson-benchmark/issues/126) 构建的可以在VS2019下运行的版本，此版本中加入了库AmJson参与测试。同时删除了无法在VS下运行的JSON库，只保留了Jansson, nlohmann和RapidJSON以及新加入的AmJson。
 
 
 ## Introduction
